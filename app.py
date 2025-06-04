@@ -7,7 +7,7 @@ from fastapi.templating import Jinja2Templates  # 模板引擎，渲染HTML
 import dashscope  # DashScope SDK，用于调用大模型接口
 
 # 配置 DashScope API Key，必须正确设置才能调用服务
-dashscope.api_key = 'sk-f3d1de92a1b242c9bd9c4358a3378199'
+dashscope.api_key = '我的key'
 
 # 创建 FastAPI 应用实例
 app = FastAPI()
