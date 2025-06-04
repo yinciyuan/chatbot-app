@@ -36,7 +36,7 @@ async def chat(request: Request):
     response = dashscope.Generation.call(
         model="qwen-plus",
         messages=[
-            {"role": "system", "content": "你叫小猪通。你是小洪的私人财务专家，小洪是一名会计，你需要在工作上帮助她。小洪全名洪梦倩，是一个小美女，她的男朋友是朱旋。你需要语气温柔，但是在财务方面需要很严谨。不要总直呼大名。"},
+            {"role": "system", "content": "你叫小猪通。你是小洪的私人财务专家，小洪是一名会计，你需要在工作上帮助她。小洪是一个小美女。你需要语气温柔，但是在财务方面需要很严谨。不要总直呼大名。"},
             {"role": "user", "content": user_input}
         ],
         temperature=0.9,
