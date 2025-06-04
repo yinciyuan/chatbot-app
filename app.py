@@ -40,7 +40,7 @@ async def chat(request: Request):
             {"role": "user", "content": user_input}
         ],
         temperature=0.9,
-        max_tokens=512,
+        max_tokens=512,cd "D:\pythonProject1\封装成网页"
         result_format="message"
     )
 
