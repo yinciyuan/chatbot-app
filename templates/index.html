@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>智能问答助手 - GPT同款风格</title>
+  <style>
+    * {
+      margin: 0; padding: 0; box-sizing: border-box;
+    }
+    html, body {
+      height: 100%;
+      background: #1e1f23;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    header {
+      height: 60px;
+      background: linear-gradient(135deg, #2e2f38, #1c1d22);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      color: #19a37c;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+    }
+    #chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      background: #26272e;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scroll-behavior: smooth;
+    }
+    .message {
+      max-width: 75%;
+      padding: 16px 20px;
+      border-radius: 18px;
+      font-size: 1rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+      position: relative;
+      transition: all 0.3s ease;
+    }
+    .message.user {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: #fff;
+      border-bottom-right-radius: 6px;
+    }
+    .message.bot {
+      align-self: flex-start;
+      background: #393a44;
+      color: #d4d4d8;
+      border-bottom-left-radius: 6px;
+    }
+    .message.bot::before {
+      content: '';
+      position: absolute;
+      left: -8px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 8px solid transparent;
+      border-right-color: #393a44;
+    }
+    footer {
+      background: #1e1f23;
+      padding: 14px 24px;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      border-top: 1px solid #333;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 14px 20px;
+      font-size: 1rem;
+      border-radius: 9999px;
+      border: none;
+      background: #2c2d35;
+      color: #e0e0e0;
+      outline: none;
+      transition: background-color 0.3s ease;
+    }
+    input[type="text"]::placeholder {
+      color: #999;
+    }
+    input[type="text"]:focus {
+      background: #3b3c46;
+    }
+    button {
+      background: #19a37c;
+      border: none;
+      padding: 12px 28px;
+      border-radius: 9999px;
+      color: white;
+      font-weight: 600;
+      font-size: 1rem;
+      box-shadow: 0 6px 16px rgba(25, 163, 124, 0.6);
+      cursor: pointer;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+    button:disabled {
+      background: #444;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    button:hover:not(:disabled) {
+      background: #0f8c67;
+      box-shadow: 0 8px 18px rgba(15, 140, 103, 0.8);
+    }
+    .loading-dots::after {
+      content: '...';
+      animation: blink 1.4s infinite;
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: #19a37c;
+    }
+    @keyframes blink {
+      0%, 100% {opacity: 0.2;}
+      50% {opacity: 1;}
+    }
+  </style>
+</head>
+<body>
+  <header>🤖 小洪私人财务专家</header>
+  <div id="chat-container"></div>
+  <footer>
+    <input id="input" type="text" placeholder="请输入问题，按回车发送..." autocomplete="off" />
+    <button id="sendBtn" disabled>发送</button>
+  </footer>
+
+  <script>
+    const chatContainer = document.getElementById('chat-container');
+    const inputEl = document.getElementById('input');
+    const sendBtn = document.getElementById('sendBtn');
+
+    function appendMessage(text, sender) {
+      const div = document.createElement('div');
+      div.className = 'message ' + (sender === 'user' ? 'user' : 'bot');
+      div.textContent = text;
+      chatContainer.appendChild(div);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+      return div;
+    }
+
+    function enableSendBtn() {
+      sendBtn.disabled = !inputEl.value.trim();
+    }
+
+    async function sendMessage() {
+      const message = inputEl.value.trim();
+      if (!message) return;
+      appendMessage(message, 'user');
+      inputEl.value = '';
+      enableSendBtn();
+      sendBtn.disabled = true;
+      inputEl.disabled = true;
+      const loadingMsg = appendMessage('', 'bot');
+      loadingMsg.classList.add('loading-dots');
+
+      try {
+        const response = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
+        const data = await response.json();
+        loadingMsg.classList.remove('loading-dots');
+        loadingMsg.textContent = '';
+
+        if (data.reply) {
+          let idx = 0;
+          const reply = data.reply;
+          function typeWriter() {
+            if (idx < reply.length) {
+              loadingMsg.textContent += reply.charAt(idx);
+              idx++;
+              chatContainer.scrollTop = chatContainer.scrollHeight;
+              setTimeout(typeWriter, 20);
+            }
+          }
+          typeWriter();
+        } else {
+          loadingMsg.textContent = '抱歉，没有收到回复。';
+        }
+      } catch (e) {
+        loadingMsg.classList.remove('loading-dots');
+        loadingMsg.textContent = '请求失败，请稍后再试。';
+      } finally {
+        inputEl.disabled = false;
+        sendBtn.disabled = true;
+        inputEl.focus();
+      }
+    }
+
+    inputEl.addEventListener('input', enableSendBtn);
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !sendBtn.disabled) {
+        sendMessage();
+      }
+    });
+    sendBtn.addEventListener('click', sendMessage);
+
+    enableSendBtn();
+    inputEl.focus();
+  </script>
+</body>
+</html>
